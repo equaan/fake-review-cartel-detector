@@ -17,6 +17,7 @@ REQUIRED_COLUMNS = [
     "review_body",
     "verified_purchase",
 ]
+OPTIONAL_COLUMNS = ["product_title"]
 
 
 def parse_args() -> argparse.Namespace:
@@ -54,7 +55,10 @@ def validate_columns(columns: Iterable[str]) -> None:
 
 def clean_chunk(chunk: pd.DataFrame) -> pd.DataFrame:
     """Apply the project's cleaning rules to a single data chunk."""
-    cleaned = chunk.loc[:, [col for col in REQUIRED_COLUMNS if col in chunk.columns]].copy()
+    selected_columns = [
+        col for col in [*REQUIRED_COLUMNS, *OPTIONAL_COLUMNS] if col in chunk.columns
+    ]
+    cleaned = chunk.loc[:, selected_columns].copy()
     cleaned = cleaned.dropna(subset=["customer_id", "product_id", "star_rating"])
 
     cleaned["star_rating"] = pd.to_numeric(cleaned["star_rating"], errors="coerce")
@@ -77,6 +81,8 @@ def clean_chunk(chunk: pd.DataFrame) -> pd.DataFrame:
     cleaned["review_body"] = (
         cleaned["review_body"].fillna("").astype(str).str.replace(r"\s+", " ", regex=True).str.strip()
     )
+    if "product_title" in cleaned.columns:
+        cleaned["product_title"] = cleaned["product_title"].fillna("").astype(str).str.strip()
     return cleaned
 
 

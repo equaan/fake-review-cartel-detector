@@ -1,26 +1,26 @@
-# TODO — Fake Review Cartel Detector
+# TODO - Fake Review Cartel Detector
 > Work through this top to bottom. Don't skip steps.
 
 ---
 
-## Phase 1 — Setup (Day 1)
+## Phase 1 - Setup (Day 1)
 
-- [ ] Create GitHub repo named `fake-review-cartel-detector`
-- [ ] Create folder structure as per README
-- [ ] Set up Python virtual environment
+- [x] Create GitHub repo named `fake-review-cartel-detector`
+- [x] Create folder structure as per README
+- [x] Set up Python virtual environment
   ```bash
   python -m venv venv
   source venv/bin/activate  # Mac/Linux
   venv\Scripts\activate     # Windows
   ```
-- [ ] Install backend dependencies
+- [x] Install backend dependencies
   ```bash
   pip install pandas numpy scipy scikit-learn xgboost fastapi uvicorn jupyter nltk matplotlib seaborn
   ```
-- [ ] Download Amazon Reviews dataset from Kaggle (Electronics category CSV)
-- [ ] Download Cornell Yelp Deception dataset from myleott.com/op_spam.html
-- [ ] Place both datasets in `backend/data/raw/`
-- [ ] Create React app
+- [x] Download Amazon Reviews dataset from Kaggle (Electronics category CSV)
+- [x] Download labeled fake review dataset (`fake reviews dataset.csv`)
+- [x] Place both datasets in `backend/data/raw/`
+- [x] Create React app
   ```bash
   npx create-react-app frontend
   cd frontend
@@ -29,62 +29,62 @@
 
 ---
 
-## Phase 2 — Exploratory Data Analysis (Day 1–2)
+## Phase 2 - Exploratory Data Analysis (Day 1-2)
 
-- [ ] Open `notebooks/01_eda.ipynb`
-- [ ] Load Amazon CSV with chunksize=10000 to avoid RAM issues
-- [ ] Check basic stats: shape, dtypes, nulls, rating distribution
-- [ ] Plot: rating distribution histogram
-- [ ] Plot: reviews per user distribution (log scale)
-- [ ] Plot: reviews per day time series
-- [ ] Identify top 100 most prolific reviewers
-- [ ] Check verified vs unverified purchase ratio
-- [ ] Save cleaned dataframe to `data/processed/amazon_clean.csv`
-- [ ] Load Cornell dataset, check label distribution (fake vs genuine)
-- [ ] Write EDA summary as markdown cell at bottom of notebook
+- [x] Open `notebooks/01_eda.ipynb`
+- [x] Load Amazon CSV with chunksize=10000 to avoid RAM issues
+- [x] Check basic stats: shape, dtypes, nulls, rating distribution
+- [x] Plot: rating distribution histogram
+- [x] Plot: reviews per user distribution (log scale)
+- [x] Plot: reviews per day time series
+- [x] Identify top 100 most prolific reviewers
+- [x] Check verified vs unverified purchase ratio
+- [x] Save cleaned dataframe to `data/processed/amazon_clean.csv`
+- [x] Load labeled fake review dataset, check label distribution
+- [x] Write EDA summary as markdown cell at bottom of notebook
 
 ---
 
-## Phase 3 — Feature Engineering (Day 2–3)
+## Phase 3 - Feature Engineering (Day 2-3)
 
 - [ ] Open `notebooks/02_feature_eng.ipynb`
 - [ ] Group Amazon data by `customer_id`
 - [ ] Calculate per-reviewer features:
-  - [ ] `avg_rating` — mean star rating
-  - [ ] `rating_variance` — std of star ratings
-  - [ ] `review_burst_score` — max reviews in any 48-hour window
-  - [ ] `account_age_at_first_review` — days from join to first review
-  - [ ] `product_overlap_ratio` — % shared products with other users (sample 1000 users)
-  - [ ] `review_text_length_avg` — mean character count
-  - [ ] `verified_purchase_ratio` — % marked verified
-  - [ ] `unique_products_reviewed` — count distinct products
+  - [ ] `avg_rating` - mean star rating
+  - [ ] `rating_variance` - std of star ratings
+  - [ ] `review_burst_score` - max reviews in any 48-hour window
+  - [ ] `account_age_at_first_review` - days from join to first review
+  - [ ] `product_overlap_ratio` - % shared products with other users (sample 1000 users)
+  - [ ] `review_text_length_avg` - mean character count
+  - [ ] `verified_purchase_ratio` - % marked verified
+  - [ ] `unique_products_reviewed` - count distinct products
 - [ ] Normalize all features using StandardScaler
 - [ ] Save feature matrix to `data/processed/reviewer_features.csv`
-- [ ] For Cornell dataset: extract same text features using TF-IDF (top 50 features)
-- [ ] Save Cornell feature matrix + labels to `data/processed/cornell_features.csv`
+- [ ] For the labeled fake review dataset: extract same text features using TF-IDF (top 50 features)
+- [ ] Save labeled review feature matrix + labels to `data/processed/cornell_features.csv`
 
 ---
 
-## Phase 4 — SVD Pipeline (Day 3–4)
+## Phase 4 - SVD Pipeline (Day 3-4)
 
 - [ ] Open `notebooks/03_svd.ipynb`
-- [ ] Build user × product sparse rating matrix using `scipy.sparse.csr_matrix`
+- [ ] Build user x product sparse rating matrix using `scipy.sparse.csr_matrix`
 - [ ] Apply `TruncatedSVD(n_components=50)` from scikit-learn
-- [ ] Check explained variance ratio — aim for > 70% total
+- [ ] Check explained variance ratio - aim for > 70% total
 - [ ] Visualize top 2 SVD components in a scatter plot (color by rating avg)
 - [ ] Concatenate SVD embeddings + behavioral features into one matrix
 - [ ] Apply DBSCAN:
   - [ ] Plot k-distance graph to find optimal eps
   - [ ] Start with `eps=0.5, min_samples=5`
   - [ ] Check number of clusters found and noise ratio
-  - [ ] Tune until clusters are meaningful (5–30 clusters typical)
+  - [ ] Tune until clusters are meaningful (5-30 clusters typical)
 - [ ] Visualize clusters using PCA 2D projection (color by cluster label)
 - [ ] Print top 10 most suspicious clusters with their reviewer stats
 - [ ] Save cluster labels to `data/processed/cluster_labels.csv`
 
 ---
 
-## Phase 5 — Ensemble Model (Day 4–5)
+## Phase 5 - Ensemble Model (Day 4-5)
 
 - [ ] Open `notebooks/04_ensemble.ipynb`
 - [ ] Load Cornell features + labels
@@ -112,19 +112,19 @@
 
 ---
 
-## Phase 6 — FastAPI Backend (Day 5–6)
+## Phase 6 - FastAPI Backend (Day 5-6)
 
-- [ ] Create `backend/src/api.py`
+- [x] Create `backend/src/api.py`
 - [ ] Load trained models + processed data on startup
 - [ ] Implement endpoints:
-  - [ ] `GET /stats` — platform level summary
-  - [ ] `GET /cartels` — all detected clusters with member list
-  - [ ] `GET /analyze/product/{product_id}` — reviews + fake scores
-  - [ ] `GET /analyze/reviewer/{reviewer_id}` — reviewer profile
-  - [ ] `POST /search` — search by product or reviewer
-- [ ] Add CORS middleware (React needs this)
+  - [x] `GET /stats` - platform level summary
+  - [x] `GET /cartels` - all detected clusters with member list
+  - [x] `GET /analyze/product/{product_id}` - reviews + fake scores
+  - [x] `GET /analyze/reviewer/{reviewer_id}` - reviewer profile
+  - [x] `POST /search` - search by product or reviewer
+- [x] Add CORS middleware (React needs this)
 - [ ] Test all endpoints with FastAPI's auto docs at `localhost:8000/docs`
-- [ ] Return network graph data structure from `/cartels`:
+- [x] Return network graph data structure from `/cartels`:
   ```json
   {
     "nodes": [{"id": "user123", "cluster": 2, "suspicion_score": 0.87}],
@@ -134,28 +134,28 @@
 
 ---
 
-## Phase 7 — React Frontend (Day 6–8)
+## Phase 7 - React Frontend (Day 6-8)
 
-- [ ] Set up API service file (`src/services/api.js`) with axios base URL
-- [ ] Build `StatsPanel` component — top-level platform stats cards
+- [x] Set up API service file (`src/services/api.js`) with axios base URL
+- [x] Build `StatsPanel` component - top-level platform stats cards
 - [ ] Build `NetworkGraph` component using D3.js:
   - [ ] Force-directed graph layout
   - [ ] Red glowing nodes for cartel members
   - [ ] Grey nodes for genuine reviewers
   - [ ] Edge thickness = number of shared products
   - [ ] Zoom and pan enabled
-  - [ ] Click node → fires event to show reviewer panel
-- [ ] Build `ReviewCard` component — fake probability bar, badge, text
-- [ ] Build `SearchBar` component — debounced search, highlights node on graph
-- [ ] Connect all components in `App.jsx`
-- [ ] Add dark theme CSS (background #0a0a0a, accent #ff4444 for cartels)
-- [ ] Test full flow: load graph → click node → see reviewer details
+  - [ ] Click node -> fires event to show reviewer panel
+- [ ] Build `ReviewCard` component - fake probability bar, badge, text
+- [ ] Build `SearchBar` component - debounced search, highlights node on graph
+- [x] Connect all components in `App.jsx`
+- [x] Add dark theme CSS (background #0a0a0a, accent #ff4444 for cartels)
+- [ ] Test full flow: load graph -> click node -> see reviewer details
 
 ---
 
-## Phase 8 — Polish and Documentation (Day 8–9)
+## Phase 8 - Polish and Documentation (Day 8-9)
 
-- [ ] Write `README.md` (already done — review and update if needed)
+- [ ] Write `README.md` (already done - review and update if needed)
 - [ ] Record a 2-minute screen demo video
 - [ ] Add model performance metrics to a `RESULTS.md` file
 - [ ] Push all code to GitHub with meaningful commit messages
@@ -173,7 +173,7 @@
 
 ---
 
-## Quick Reference — Common Commands
+## Quick Reference - Common Commands
 
 ```bash
 # Start backend
