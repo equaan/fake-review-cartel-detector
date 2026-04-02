@@ -1,0 +1,16 @@
+venv/
+.venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.DS_Store
+
+backend/data/raw/
+backend/data/processed/
+backend/models/*.pkl
+backend/models/*.joblib
+backend/.env
+
+frontend/node_modules/
+frontend/build/
+frontend/.env
