@@ -47,7 +47,7 @@
 
 ## Phase 3 - Feature Engineering (Day 2-3)
 
-- [ ] Open `notebooks/02_feature_eng.ipynb`
+- [x] Open `notebooks/02_feature_eng.ipynb`
 - [ ] Group Amazon data by `customer_id`
 - [ ] Calculate per-reviewer features:
   - [ ] `avg_rating` - mean star rating
@@ -138,15 +138,15 @@
 
 - [x] Set up API service file (`src/services/api.js`) with axios base URL
 - [x] Build `StatsPanel` component - top-level platform stats cards
-- [ ] Build `NetworkGraph` component using D3.js:
-  - [ ] Force-directed graph layout
-  - [ ] Red glowing nodes for cartel members
-  - [ ] Grey nodes for genuine reviewers
-  - [ ] Edge thickness = number of shared products
-  - [ ] Zoom and pan enabled
-  - [ ] Click node -> fires event to show reviewer panel
-- [ ] Build `ReviewCard` component - fake probability bar, badge, text
-- [ ] Build `SearchBar` component - debounced search, highlights node on graph
+- [x] Build `NetworkGraph` component using D3.js:
+  - [x] Force-directed graph layout
+  - [x] Red glowing nodes for cartel members
+  - [x] Grey nodes for genuine reviewers
+  - [x] Edge thickness = number of shared products
+  - [x] Zoom and pan enabled
+  - [x] Click node -> fires event to show reviewer panel
+- [x] Build `ReviewCard` component - fake probability bar, badge, text
+- [x] Build `SearchBar` component - debounced search, highlights node on graph
 - [x] Connect all components in `App.jsx`
 - [x] Add dark theme CSS (background #0a0a0a, accent #ff4444 for cartels)
 - [ ] Test full flow: load graph -> click node -> see reviewer details

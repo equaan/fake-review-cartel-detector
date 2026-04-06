@@ -11,7 +11,7 @@ The project has moved beyond planning docs and now has a working code scaffold f
 - SVD + DBSCAN pipeline
 - ensemble model training scaffold
 - FastAPI API scaffold
-- React frontend scaffold
+- React frontend with core interactive components
 
 The codebase is not finished end-to-end yet, but it is on track.
 
@@ -108,6 +108,47 @@ Important caveat:
 - the generated matrix contains **207,498 reviewers** and 9 normalized reviewer features plus `customer_id`
 - this was done intentionally to keep progress moving on a weaker laptop
 
+### Phase 7
+
+Substantially progressed, but not fully validated against final backend artifacts.
+
+Completed so far:
+
+- `frontend/src/App.jsx` now coordinates:
+  - graph loading
+  - fallback demo graph when cartel output is not ready
+  - reviewer drawer state
+  - reviewer detail fetch flow
+  - search highlight flow
+- `frontend/src/components/NetworkGraph.jsx` now implements:
+  - D3 force-directed graph
+  - zoom and pan
+  - cartel/genuine node styling
+  - node click callback
+  - hover tooltip
+  - graph legend
+- `frontend/src/components/SearchBar.jsx` now supports:
+  - submit search
+  - debounced search
+- `frontend/src/components/StatsPanel.jsx` now:
+  - fetches backend stats
+  - shows loading skeletons
+  - shows error state
+- `frontend/src/components/ReviewCard.jsx` was added for reviewer review display
+- `frontend/src/services/api.js` now contains real API helper functions
+- `frontend/src/styles.css` now supports:
+  - graph canvas
+  - reviewer drawer
+  - review cards
+  - loading skeletons
+  - empty/error states
+
+Still pending in practice:
+
+- full end-to-end testing with real `cluster_labels.csv`
+- final backend-integrated reviewer data flow validation
+- confirming the UI behavior after full model and clustering outputs exist
+
 ## What Was Being Attempted When the Laptop Struggled
 
 The machine slowdown/crash was **not** from ensemble model training.
@@ -148,6 +189,16 @@ What happened specifically:
 - `backend/notebooks/02_feature_eng.ipynb`
 - `backend/notebooks/03_svd.ipynb`
 - `backend/notebooks/04_ensemble.ipynb`
+
+### Frontend source
+
+- `frontend/src/App.jsx`
+- `frontend/src/components/NetworkGraph.jsx`
+- `frontend/src/components/ReviewCard.jsx`
+- `frontend/src/components/SearchBar.jsx`
+- `frontend/src/components/StatsPanel.jsx`
+- `frontend/src/services/api.js`
+- `frontend/src/styles.css`
 
 ### Processed outputs
 
@@ -320,12 +371,11 @@ Then open:
 
 ### Phase 7
 
-Frontend scaffold exists, but it still needs:
+Frontend core components now exist, but it still needs:
 
-- real D3 `NetworkGraph`
-- `ReviewCard`
-- better `SearchBar`
-- live API wiring to finished backend outputs
+- testing against real cluster output
+- confirmation that reviewer drill-down works with final backend artifacts
+- final UI pass once the stronger PC finishes the pipeline
 
 ## Recommended Safe Resume Strategy
 
@@ -337,8 +387,8 @@ On the stronger PC, use this order:
 4. run `svd_pipeline.py` on 250k
 5. if stable, scale both to 1M
 6. adapt and run `ensemble_model.py` using `fake reviews dataset.csv`
-7. finish API data loading
-8. finish frontend integration
+7. finish API data loading using final model and cluster artifacts
+8. test frontend against the completed backend
 
 This staged approach is much safer than trying the full Amazon pipeline immediately.
 
@@ -351,13 +401,14 @@ You already have:
 - Phase 1 complete
 - Phase 2 complete
 - Phase 3 started with real generated outputs
+- Phase 7 core UI components implemented
 - backend pipeline scripts written
 - API scaffold written
-- frontend scaffold written
+- frontend interaction layer largely written
 
 The main unfinished work is:
 
 - complete Phase 3 on a larger/full Amazon run
 - complete Phase 4 clustering outputs
 - adapt Phase 5 training to the actual labeled dataset file
-- finish backend + frontend integration
+- finish backend + frontend integration and validation
