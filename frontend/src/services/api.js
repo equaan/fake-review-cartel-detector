@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:8000"
+  // Prefer explicit env override; otherwise use relative URLs via CRA proxy.
+  baseURL: process.env.REACT_APP_API_BASE_URL || ""
 });
 
 export async function fetchStats() {
