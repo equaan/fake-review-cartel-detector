@@ -14,18 +14,19 @@ if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
   throw "npm is not available in this shell. Install Node.js and retry."
 }
 
-$ngrokCommand = "ngrok"
-if (-not (Get-Command ngrok -ErrorAction SilentlyContinue)) {
-  if (Test-Path $ngrokWinGetPath) {
-    $ngrokCommand = "`"$ngrokWinGetPath`""
-  } else {
-    throw "ngrok command not found. Install ngrok or add it to PATH."
-  }
+$ngrokExe = $null
+$ngrokCmdInfo = Get-Command ngrok -ErrorAction SilentlyContinue
+if ($ngrokCmdInfo) {
+  $ngrokExe = $ngrokCmdInfo.Source
+} elseif (Test-Path $ngrokWinGetPath) {
+  $ngrokExe = $ngrokWinGetPath
+} else {
+  throw "ngrok command not found. Install ngrok or add it to PATH."
 }
 
-$backendCmd = "Set-Location '$backendDir'; '$uvicornExe' src.api:app --reload --port 8000"
+$backendCmd = "Set-Location '$backendDir'; & '$uvicornExe' src.api:app --reload --port 8000"
 $frontendCmd = "Set-Location '$frontendDir'; npm start"
-$ngrokCmd = "Set-Location '$repoRoot'; $ngrokCommand http 3000 --log stdout"
+$ngrokCmd = "Set-Location '$repoRoot'; & '$ngrokExe' http 3000 --log stdout"
 
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd | Out-Null
 Start-Sleep -Seconds 2
