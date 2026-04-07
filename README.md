@@ -1,154 +1,148 @@
-# 🕵️ Fake Review Cartel Detector
+# Fake Review Cartel Detector
 
-> Detects organized fake review networks (cartels) using SVD, DBSCAN, XGBoost, AdaBoost, and Ensemble Learning.
+Detects coordinated fake-review groups (cartels), not just isolated fake reviews, using a classical ML pipeline with SVD, DBSCAN, XGBoost, AdaBoost, and ensemble voting.
 
----
+## 1. Project Summary (For Presentation)
 
-## What This Project Does
+Problem:
+- Typical fake-review systems classify single reviews.
+- Real abuse often happens through coordinated reviewer groups.
 
-Most fake review detectors flag **individual fake reviews**.  
-This system detects **organized cartels** — coordinated groups of fake accounts working together.
+This project:
+- engineers reviewer behavior features,
+- learns latent reviewer-product structure with SVD,
+- finds dense suspicious groups with DBSCAN,
+- classifies fake vs genuine review text with XGBoost + AdaBoost ensemble,
+- exposes results through FastAPI,
+- visualizes suspicious reviewer networks in a React + D3 dashboard.
 
-Think of it like this: police don't just arrest one drug dealer, they take down the whole operation. This system does the same for fake review networks.
+## 2. Current Stable Status
 
----
+Validated on this machine:
+- backend API routes are running and tested,
+- frontend compiles and serves successfully,
+- end-to-end flow works with the stable 250k reviewer clustering baseline.
 
-## Tech Stack
+Latest measured runtime snapshot:
+- total reviews: 3,089,972
+- unique reviewers: 2,152,195
+- graph payload: 500 nodes, 73 edges
 
-| Layer | Technology |
-|---|---|
-| ML Backend | Python, Scikit-learn, XGBoost, SciPy |
-| API | FastAPI |
-| Frontend | React + D3.js (network graph) |
-| Dataset | Amazon US Customer Reviews (Kaggle) |
-| Labeled Ground Truth | Cornell Yelp Deception Dataset |
+Latest measured model snapshot:
+- accuracy: 0.8652
+- precision: 0.8688
+- recall: 0.8602
+- f1: 0.8645
+- roc-auc: 0.9444
 
----
+See full details in docs/RESULTS.md.
 
-## Project Structure
+## 3. Quick Start (Windows)
 
-```
-fake-review-cartel-detector/
-│
-├── backend/
-│   ├── data/
-│   │   └── raw/                  # Put downloaded datasets here
-│   ├── notebooks/
-│   │   ├── 01_eda.ipynb          # Exploratory Data Analysis
-│   │   ├── 02_feature_eng.ipynb  # Feature Engineering
-│   │   ├── 03_svd.ipynb          # SVD + DBSCAN pipeline
-│   │   └── 04_ensemble.ipynb     # XGBoost + AdaBoost ensemble
-│   ├── src/
-│   │   ├── preprocess.py         # Data cleaning + feature creation
-│   │   ├── svd_pipeline.py       # SVD decomposition
-│   │   ├── dbscan_cluster.py     # Cartel detection via DBSCAN
-│   │   ├── ensemble_model.py     # XGBoost + AdaBoost ensemble
-│   │   └── api.py                # FastAPI routes
-│   └── requirements.txt
-│
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── NetworkGraph.jsx   # D3.js cartel web visualization
-│   │   │   ├── ReviewCard.jsx     # Individual review analysis card
-│   │   │   ├── StatsPanel.jsx     # Platform-level fake review stats
-│   │   │   └── SearchBar.jsx      # Product/reviewer search
-│   │   ├── App.jsx
-│   │   └── index.js
-│   └── package.json
-│
-├── docs/
-│   ├── PRD.md                    # Product Requirements Document
-│   ├── TODO.md                   # Development checklist
-│   └── AI_PROMPTS.md             # Prompts for code generation
-│
-└── README.md                     # This file
-```
+From repository root:
 
----
-
-## How to Run (Step by Step)
-
-### Step 1 — Download Dataset
-1. Go to: `https://www.kaggle.com/datasets/cynthiarempel/amazon-us-customer-reviews-dataset`
-2. Download any 1-2 product category CSV files (Electronics or Books work best)
-3. Place them in `backend/data/raw/`
-4. Also download Cornell Yelp Deception dataset from: `https://myleott.com/op_spam.html`
-
-### Step 2 — Backend Setup
-```bash
-cd backend
-pip install -r requirements.txt
-```
-
-### Step 3 — Run Notebooks in Order
-```bash
-jupyter notebook
-# Run 01 → 02 → 03 → 04 in sequence
-```
-
-### Step 4 — Start API
-```bash
-uvicorn src.api:app --reload --port 8000
-```
-
-### Step 5 — Frontend Setup
-```bash
+```powershell
+python -m venv venv
+venv\Scripts\python.exe -m pip install -r backend/requirements.txt
 cd frontend
 npm install
+cd ..
+```
+
+Place datasets in:
+- backend/data/raw/amazon_reviews_us_Electronics_v1_00.csv
+- backend/data/raw/fake reviews dataset.csv
+
+Run backend:
+
+```powershell
+cd backend
+..\venv\Scripts\uvicorn.exe src.api:app --reload --port 8000
+```
+
+Run frontend (new terminal):
+
+```powershell
+cd frontend
 npm start
 ```
 
-### Step 6 — Open App
-Go to `http://localhost:3000` in your browser.
+Open:
+- http://localhost:3000
+- http://localhost:8000/docs
 
----
+## 4. Presentation Demo Flow (2-3 Minutes)
 
-## ML Pipeline Overview
+1. Start with problem statement: coordinated cartels are more harmful than isolated fake reviews.
+2. Show stats cards in UI (volume and suspicious ratio).
+3. Open network graph and explain nodes/edges meaning.
+4. Click a suspicious node and show reviewer profile + reviews.
+5. Use search to find reviewer/product and show highlight/drill-down.
+6. Close with model metrics and explain why ensemble + clustering together is stronger.
 
-```
-Raw Review Data (user, product, rating, timestamp, text)
-        ↓
-Feature Engineering
-(rating patterns, burst speed, account age, product overlap, text features)
-        ↓
-SVD — Singular Value Decomposition
-(compress user-product matrix, find hidden behavioral similarities)
-        ↓
-DBSCAN — Density Based Clustering
-(find tight suspicious clusters = cartels, mark genuine users as noise)
-        ↓
-XGBoost ──┐
-           ├──► Voting Ensemble → Fake / Genuine + Confidence Score
-AdaBoost ──┘
-        ↓
-React Network Graph Dashboard
-(visualize cartel web, click nodes, explore suspects)
-```
+## 5. Viva Q&A Cheat Sheet
 
----
+Why SVD?
+- The user-product matrix is huge and sparse. SVD compresses it into dense latent structure capturing hidden behavior similarities.
 
-## Syllabus Coverage
+Why DBSCAN instead of K-Means?
+- No need to predefine cluster count and it naturally marks isolated users as noise (-1), which fits this problem.
 
-| Algorithm | Role in Project |
+Why ensemble instead of a single model?
+- XGBoost is strong, AdaBoost helps hard edge cases, and soft voting improves stability.
+
+How do you handle missing Amazon labels?
+- Semi-supervised strategy: supervised text model trained on labeled fake review data plus unsupervised cartel discovery from Amazon behavior/network patterns.
+
+What does the graph represent?
+- Nodes are reviewers, edges are shared reviewed products, dense connected suspicious clusters indicate potential cartels.
+
+## 6. Tech Stack
+
+| Layer | Technology |
 |---|---|
-| SVD | Latent user-product pattern extraction |
-| DBSCAN | Unsupervised cartel cluster detection |
-| XGBoost | Main fake/genuine classifier |
-| AdaBoost | Handles sneaky edge-case fake reviews |
-| Ensemble Learning | Combines XGBoost + AdaBoost via voting |
+| Backend | Python, FastAPI, scikit-learn, xgboost, scipy, pandas |
+| Frontend | React 18, D3.js v7 |
+| Storage | CSV artifacts (no database for v1) |
+| Model persistence | joblib |
 
-**5 out of 8 syllabus topics covered — all with genuine logical purpose.**
+## 7. Syllabus Coverage
 
----
+| Algorithm | Usage |
+|---|---|
+| SVD | latent reviewer-product embeddings |
+| DBSCAN | cartel cluster detection |
+| XGBoost | supervised fake/genuine classifier |
+| AdaBoost | complementary classifier in ensemble |
+| Ensemble Learning | voting classifier for final score |
 
-## Hardware Requirements
+## 8. Repository Layout
 
-| Spec | Minimum | Recommended |
-|---|---|---|
-| RAM | 8GB | 16GB |
-| CPU | Any modern i5/i7 | i5-12500H or better |
-| GPU | Not needed | Not needed |
-| Storage | 10GB free | 20GB free |
+```text
+fake-review-cartel-detector-main/
+  backend/
+  frontend/
+  docs/
+    AI_PROMPTS.md
+    PRD.md
+    PROGRESS.md
+    RESULTS.md
+    TODO.md
+    claude.md
+  README.md
+```
 
-> ✅ Works perfectly on i5-12500H with 16GB RAM. Use pandas `chunksize` when loading large CSVs.
+## 9. Documentation Index
+
+- docs/PRD.md: full product requirements and scope
+- docs/TODO.md: implementation checklist
+- docs/PROGRESS.md: handoff and timeline progress
+- docs/RESULTS.md: metrics and runtime validation
+- docs/AI_PROMPTS.md: generation prompts and viva notes
+- docs/claude.md: detailed project context and constraints
+
+## 10. Important Operational Note
+
+This machine is stable with the 250k reviewer-feature/cluster pipeline.
+
+Avoid running the 1M SVD/DBSCAN step here due to memory and responsiveness limits. For larger clustering quality upgrades, run that step on a stronger PC and then bring artifacts back.

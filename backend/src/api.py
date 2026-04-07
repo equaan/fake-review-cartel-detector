@@ -80,10 +80,66 @@ class AppState:
                     how="left",
                 )
 
+        reviews = self._merge_predictions(reviews)
         if "fake_probability" not in reviews.columns:
             reviews["fake_probability"] = reviews.apply(self._estimate_fake_probability, axis=1)
 
         self.reviews = reviews
+
+    def _merge_predictions(self, reviews: pd.DataFrame) -> pd.DataFrame:
+        """Prefer saved model predictions when they are available."""
+        if self.predictions.empty:
+            return reviews
+
+        prediction_frame = self.predictions.copy()
+        if "fake_probability" not in prediction_frame.columns:
+            return reviews
+
+        # The prediction export is generated from the same cleaned CSV in row order,
+        # so positional alignment is the safest merge when natural keys are not unique.
+        if len(prediction_frame) == len(reviews):
+            aligned = reviews.copy().reset_index(drop=True)
+            aligned["fake_probability"] = pd.to_numeric(
+                prediction_frame["fake_probability"],
+                errors="coerce",
+            )
+            fallback_mask = aligned["fake_probability"].isna()
+            if fallback_mask.any():
+                aligned.loc[fallback_mask, "fake_probability"] = aligned.loc[fallback_mask].apply(
+                    self._estimate_fake_probability,
+                    axis=1,
+                )
+            return aligned
+
+        required_columns = {"customer_id", "product_id", "review_date"}
+        if not required_columns.issubset(set(prediction_frame.columns)):
+            return reviews
+
+        reviews = reviews.copy()
+        prediction_frame["customer_id"] = prediction_frame["customer_id"].astype(str)
+        prediction_frame["product_id"] = prediction_frame["product_id"].astype(str)
+        prediction_frame["review_date"] = pd.to_datetime(prediction_frame["review_date"], errors="coerce")
+        reviews["customer_id"] = reviews["customer_id"].astype(str)
+        reviews["product_id"] = reviews["product_id"].astype(str)
+        reviews["review_date"] = pd.to_datetime(reviews["review_date"], errors="coerce")
+
+        prediction_frame = (
+            prediction_frame.dropna(subset=["review_date"])
+            .groupby(["customer_id", "product_id", "review_date"], as_index=False)["fake_probability"]
+            .mean()
+        )
+        merged = reviews.merge(
+            prediction_frame,
+            on=["customer_id", "product_id", "review_date"],
+            how="left",
+        )
+        fallback_mask = merged["fake_probability"].isna()
+        if fallback_mask.any():
+            merged.loc[fallback_mask, "fake_probability"] = merged.loc[fallback_mask].apply(
+                self._estimate_fake_probability,
+                axis=1,
+            )
+        return merged
 
     @staticmethod
     def _estimate_fake_probability(row: pd.Series) -> float:
@@ -187,18 +243,18 @@ def get_cartels() -> dict[str, list[dict[str, Any]]]:
     edges = [
         {"source": source, "target": target, "shared_products": weight}
         for (source, target), weight in edge_weights.items()
-        if weight >= 2
+        if weight >= 1
     ]
 
     nodes = [
         {
-            "id": row["customer_id"],
-            "cluster": int(row["cluster_label"]),
-            "suspicion_score": round(float(row["suspicion_score"]), 3),
-            "avg_rating": round(float(row["avg_rating"]), 2),
-            "review_count": int(row["review_count"]),
+            "id": str(row.customer_id),
+            "cluster": int(row.cluster_label),
+            "suspicion_score": round(float(row.suspicion_score), 3),
+            "avg_rating": round(float(row.avg_rating), 2),
+            "review_count": int(row.review_count),
         }
-        for _, row in reviewer_summary.iterrows()
+        for row in reviewer_summary.itertuples(index=False)
     ]
     return {"nodes": nodes, "edges": edges}
 
@@ -216,14 +272,21 @@ def analyze_product(product_id: str) -> dict[str, Any]:
     fake_mask = product_reviews["fake_probability"] >= 0.5
     reviews = []
     for _, review in product_reviews.sort_values("review_date", ascending=False).iterrows():
+        star_rating = int(review["star_rating"]) if pd.notna(review.get("star_rating")) else 0
+        verified_purchase = (
+            int(review.get("verified_purchase", 0))
+            if pd.notna(review.get("verified_purchase", 0))
+            else 0
+        )
+        cluster_label = int(review.get("cluster_label", -1)) if pd.notna(review.get("cluster_label")) else -1
         reviews.append(
             {
                 "customer_id": review["customer_id"],
-                "star_rating": int(review["star_rating"]),
+                "star_rating": star_rating,
                 "review_date": str(review["review_date"]),
                 "review_body": review.get("review_body", ""),
-                "verified_purchase": int(review.get("verified_purchase", 0)),
-                "cluster_label": int(review.get("cluster_label", -1)),
+                "verified_purchase": verified_purchase,
+                "cluster_label": cluster_label,
                 "fake_probability": round(float(review["fake_probability"]), 3),
             }
         )
