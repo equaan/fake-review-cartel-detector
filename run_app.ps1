@@ -71,8 +71,8 @@ if ($ngrokCmdInfo) {
 }
 
 $backendCmd = "Set-Location '$backendDir'; & '$uvicornExe' src.api:app --reload --port 8000"
-$frontendCmd = "Set-Location '$frontendDir'; npm start"
-$ngrokCmd = "Set-Location '$repoRoot'; & '$ngrokExe' http 3000 --log stdout"
+$frontendCmd = "Set-Location '$frontendDir'; `$env:DANGEROUSLY_DISABLE_HOST_CHECK='true'; npm start"
+$ngrokCmd = "Set-Location '$repoRoot'; & '$ngrokExe' http 3000 --host-header=localhost:3000 --log stdout"
 
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd | Out-Null
 
