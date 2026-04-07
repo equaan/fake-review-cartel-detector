@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import NetworkGraph from "./components/NetworkGraph";
 import ReviewCard from "./components/ReviewCard";
@@ -85,7 +85,7 @@ export default function App() {
     }
   }
 
-  async function handleSearch(query) {
+  const handleSearch = useCallback(async (query) => {
     setSearchLoading(true);
 
     try {
@@ -104,7 +104,7 @@ export default function App() {
     } finally {
       setSearchLoading(false);
     }
-  }
+  }, [graphData.nodes]);
 
   const reviewerFeatures = useMemo(() => {
     if (!selectedReviewer?.features) {

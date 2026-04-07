@@ -39,6 +39,12 @@ See full details in docs/RESULTS.md.
 
 ## 3. Quick Start (Windows)
 
+One-command start (opens backend, frontend, and ngrok in separate windows):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\run_app.ps1
+```
+
 From repository root:
 
 ```powershell
