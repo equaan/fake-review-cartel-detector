@@ -71,6 +71,46 @@ Open:
 - http://localhost:3000
 - http://localhost:8000/docs
 
+## 3.1 Run For Laptop Demo Using ngrok
+
+Use 3 terminals from repository root.
+
+Terminal 1: backend
+
+```powershell
+cd backend
+..\venv\Scripts\uvicorn.exe src.api:app --reload --port 8000
+```
+
+Terminal 2: frontend
+
+```powershell
+cd frontend
+npm start
+```
+
+Terminal 3: ngrok (frontend tunnel)
+
+```powershell
+ngrok http 3000
+```
+
+Then open the generated https ngrok URL on your laptop.
+
+Important:
+- Tunnel port 3000 (frontend), not 8000, so the UI and API both work from one public URL.
+- Keep all 3 terminals running during demo.
+
+If the ngrok page shows an error:
+- Verify frontend is running at http://localhost:3000.
+- Verify backend is running at http://localhost:8000/health.
+- If ngrok reports old agent/auth errors, run:
+
+```powershell
+ngrok update
+ngrok config add-authtoken <YOUR_TOKEN>
+```
+
 ## 4. Presentation Demo Flow (2-3 Minutes)
 
 1. Start with problem statement: coordinated cartels are more harmful than isolated fake reviews.
