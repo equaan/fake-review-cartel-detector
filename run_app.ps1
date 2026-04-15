@@ -37,16 +37,20 @@ function Get-NgrokPublicUrl {
 
   $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
   while ((Get-Date) -lt $deadline) {
-    try {
-      $resp = Invoke-WebRequest -Uri "http://127.0.0.1:4040/api/tunnels" -UseBasicParsing -TimeoutSec 5
-      $payload = $resp.Content | ConvertFrom-Json
-      $httpsTunnel = $payload.tunnels | Where-Object { $_.public_url -like "https://*" } | Select-Object -First 1
-      if ($httpsTunnel -and $httpsTunnel.public_url) {
-        return [string]$httpsTunnel.public_url
+    foreach ($port in 4040..4050) {
+      try {
+        $resp = Invoke-WebRequest -Uri "http://127.0.0.1:$port/api/tunnels" -UseBasicParsing -TimeoutSec 3
+        $payload = $resp.Content | ConvertFrom-Json
+        $httpsTunnel = $payload.tunnels | Where-Object { $_.public_url -like "https://*" } | Select-Object -First 1
+        if ($httpsTunnel -and $httpsTunnel.public_url) {
+          return [string]$httpsTunnel.public_url
+        }
+      } catch {
+        continue
       }
-    } catch {
-      Start-Sleep -Seconds 2
     }
+
+    Start-Sleep -Seconds 2
   }
 
   return $null
@@ -72,7 +76,7 @@ if ($ngrokCmdInfo) {
 
 $backendCmd = "Set-Location '$backendDir'; & '$uvicornExe' src.api:app --reload --port 8000"
 $frontendCmd = "Set-Location '$frontendDir'; `$env:DANGEROUSLY_DISABLE_HOST_CHECK='true'; npm start"
-$ngrokCmd = "Set-Location '$repoRoot'; & '$ngrokExe' http 3000 --host-header=localhost:3000 --log stdout"
+$ngrokCmd = "Set-Location '$repoRoot'; & '$ngrokExe' http 3000 --host-header=localhost:3000 --web-addr=127.0.0.1:4040 --log stdout"
 
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd | Out-Null
 

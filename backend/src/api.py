@@ -241,7 +241,7 @@ def get_cartels() -> dict[str, list[dict[str, Any]]]:
                 edge_weights[key] = edge_weights.get(key, 0) + 1
 
     edges = [
-        {"source": source, "target": target, "shared_products": weight}
+        {"source": str(source), "target": str(target), "shared_products": weight}
         for (source, target), weight in edge_weights.items()
         if weight >= 1
     ]
