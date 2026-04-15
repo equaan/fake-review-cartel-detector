@@ -5,6 +5,8 @@ export default function NetworkGraph({
   nodes,
   edges,
   highlightedIds = [],
+  includeNoise = false,
+  onToggleIncludeNoise,
   onNodeClick
 }) {
   const svgRef = useRef(null);
@@ -183,6 +185,13 @@ export default function NetworkGraph({
           </p>
         </div>
         <div className="graph-metadata">
+          <button
+            type="button"
+            className="search-button"
+            onClick={() => onToggleIncludeNoise?.()}
+          >
+            {includeNoise ? "Hide Genuine" : "Show Genuine"}
+          </button>
           <span>{nodes.length} nodes</span>
           <span>{edges.length} edges</span>
         </div>

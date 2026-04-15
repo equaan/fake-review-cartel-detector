@@ -7,7 +7,7 @@ from time import perf_counter
 from typing import Any
 
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -209,28 +209,47 @@ def get_stats() -> dict[str, Any]:
 
 
 @app.get("/cartels")
-def get_cartels() -> dict[str, list[dict[str, Any]]]:
+def get_cartels(include_noise: bool = Query(default=False)) -> dict[str, list[dict[str, Any]]]:
     """Return graph-ready cartel node and edge data."""
     if state.reviews.empty:
         return {"nodes": [], "edges": []}
 
-    cartel_reviews = state.reviews.loc[state.reviews["cluster_label"].fillna(-1) != -1].copy()
-    if cartel_reviews.empty:
+    source_reviews = state.reviews.copy()
+    if not include_noise:
+        source_reviews = source_reviews.loc[source_reviews["cluster_label"].fillna(-1) != -1].copy()
+
+    if source_reviews.empty:
         return {"nodes": [], "edges": []}
 
-    reviewer_summary = (
-        cartel_reviews.groupby(["customer_id", "cluster_label"], as_index=False)
+    all_summary = (
+        source_reviews.groupby(["customer_id", "cluster_label"], as_index=False)
         .agg(
             suspicion_score=("fake_probability", "mean"),
             avg_rating=("star_rating", "mean"),
             review_count=("product_id", "count"),
         )
-        .sort_values("suspicion_score", ascending=False)
-        .head(500)
     )
 
+    if include_noise:
+        cartel_summary = (
+            all_summary.loc[all_summary["cluster_label"].fillna(-1) != -1]
+            .sort_values("suspicion_score", ascending=False)
+            .head(350)
+        )
+        noise_summary = (
+            all_summary.loc[all_summary["cluster_label"].fillna(-1) == -1]
+            .sort_values("review_count", ascending=False)
+            .head(150)
+        )
+        reviewer_summary = pd.concat([cartel_summary, noise_summary], ignore_index=True).drop_duplicates(
+            subset=["customer_id"],
+            keep="first",
+        )
+    else:
+        reviewer_summary = all_summary.sort_values("suspicion_score", ascending=False).head(500)
+
     allowed_reviewers = set(reviewer_summary["customer_id"])
-    filtered_reviews = cartel_reviews[cartel_reviews["customer_id"].isin(allowed_reviewers)]
+    filtered_reviews = source_reviews[source_reviews["customer_id"].isin(allowed_reviewers)]
     product_groups = filtered_reviews.groupby("product_id")["customer_id"].apply(lambda s: sorted(set(s)))
 
     edge_weights: dict[tuple[str, str], int] = {}

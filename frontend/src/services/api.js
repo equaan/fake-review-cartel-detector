@@ -10,8 +10,10 @@ export async function fetchStats() {
   return response.data;
 }
 
-export async function fetchCartels() {
-  const response = await api.get("/cartels");
+export async function fetchCartels(includeNoise = false) {
+  const response = await api.get("/cartels", {
+    params: { include_noise: includeNoise }
+  });
   return response.data;
 }
 

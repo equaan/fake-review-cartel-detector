@@ -23,6 +23,7 @@ const fallbackEdges = [
 export default function App() {
   const [graphData, setGraphData] = useState({ nodes: [], edges: [] });
   const [graphError, setGraphError] = useState("");
+  const [includeNoise, setIncludeNoise] = useState(false);
   const [selectedReviewer, setSelectedReviewer] = useState(null);
   const [reviewerError, setReviewerError] = useState("");
   const [reviewerLoading, setReviewerLoading] = useState(false);
@@ -34,7 +35,7 @@ export default function App() {
 
     async function loadCartels() {
       try {
-        const data = await fetchCartels();
+        const data = await fetchCartels(includeNoise);
         if (!active) {
           return;
         }
@@ -59,7 +60,7 @@ export default function App() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [includeNoise]);
 
   async function handleNodeClick(node) {
     setReviewerLoading(true);
@@ -135,6 +136,8 @@ export default function App() {
             nodes={graphData.nodes}
             edges={graphData.edges}
             highlightedIds={highlightedIds}
+            includeNoise={includeNoise}
+            onToggleIncludeNoise={() => setIncludeNoise((previous) => !previous)}
             onNodeClick={handleNodeClick}
           />
         </div>
