@@ -1,25 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as d3 from "d3";
 
-function buildLinkedNodes(nodes, edges) {
-  const byId = new Map(nodes.map((node) => [node.id, { ...node }]));
-  return edges
-    .map((edge) => {
-      const source = byId.get(edge.source);
-      const target = byId.get(edge.target);
-      if (!source || !target) {
-        return null;
-      }
-
-      return {
-        ...edge,
-        source,
-        target
-      };
-    })
-    .filter(Boolean);
-}
-
 export default function NetworkGraph({
   nodes,
   edges,
@@ -50,16 +31,21 @@ export default function NetworkGraph({
     merge.append("feMergeNode").attr("in", "SourceGraphic");
 
     const root = svg.append("g");
-    const linkedEdges = buildLinkedNodes(nodes, edges);
+    const simulationNodes = nodes.map((node) => ({ ...node, id: String(node.id) }));
+    const simulationEdges = edges.map((edge) => ({
+      ...edge,
+      source: String(edge.source),
+      target: String(edge.target)
+    }));
     const simulation = d3
-      .forceSimulation(nodes.map((node) => ({ ...node })))
+      .forceSimulation(simulationNodes)
       .force(
         "link",
         d3
-          .forceLink(linkedEdges)
-          .id((node) => node.id)
+          .forceLink(simulationEdges)
+          .id((node) => String(node.id))
           .distance(70)
-          .strength(0.08)
+          .strength(0.1)
       )
       .force("charge", d3.forceManyBody().strength(-90))
       .force("center", d3.forceCenter(width / 2, height / 2))
@@ -76,12 +62,12 @@ export default function NetworkGraph({
 
     const link = root
       .append("g")
-      .attr("stroke", "#2b4b3f")
-      .attr("stroke-opacity", 0.4)
+      .attr("stroke", "rgba(255, 209, 102, 0.75)")
+      .attr("stroke-opacity", 0.8)
       .selectAll("line")
-      .data(linkedEdges)
+      .data(simulationEdges)
       .join("line")
-      .attr("stroke-width", (edge) => Math.min(3, Math.max(0.5, edge.shared_products / 2)));
+      .attr("stroke-width", (edge) => Math.min(4, Math.max(1, edge.shared_products / 2)));
 
     const node = root
       .append("g")

@@ -37,7 +37,7 @@ function Get-NgrokPublicUrl {
 
   $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
   while ((Get-Date) -lt $deadline) {
-    foreach ($port in 4040..4050) {
+    foreach ($port in 4040..4100) {
       try {
         $resp = Invoke-WebRequest -Uri "http://127.0.0.1:$port/api/tunnels" -UseBasicParsing -TimeoutSec 3
         $payload = $resp.Content | ConvertFrom-Json
@@ -76,7 +76,13 @@ if ($ngrokCmdInfo) {
 
 $backendCmd = "Set-Location '$backendDir'; & '$uvicornExe' src.api:app --reload --port 8000"
 $frontendCmd = "Set-Location '$frontendDir'; `$env:DANGEROUSLY_DISABLE_HOST_CHECK='true'; npm start"
-$ngrokCmd = "Set-Location '$repoRoot'; & '$ngrokExe' http 3000 --host-header=localhost:3000 --web-addr=127.0.0.1:4040 --log stdout"
+$ngrokCmd = "Set-Location '$repoRoot'; & '$ngrokExe' http 3000 --host-header=localhost:3000 --log stdout"
+
+# Clean up stale ngrok process from previous runs so inspect ports are not locked.
+$existingNgrok = Get-Process ngrok -ErrorAction SilentlyContinue
+if ($existingNgrok) {
+  $existingNgrok | ForEach-Object { Stop-Process -Id $_.Id -Force }
+}
 
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $backendCmd | Out-Null
 
@@ -99,7 +105,7 @@ Start-Process powershell -ArgumentList "-NoExit", "-Command", $ngrokCmd | Out-Nu
 Write-Output "Waiting for ngrok tunnel..."
 $publicUrl = Get-NgrokPublicUrl -TimeoutSeconds 45
 if (-not $publicUrl) {
-  throw "ngrok tunnel URL was not detected from http://127.0.0.1:4040/api/tunnels."
+  throw "ngrok tunnel URL was not detected from local ngrok inspect API ports (4040-4100)."
 }
 
 $ngrokStatsReady = Wait-ForHttpOk -Url "$publicUrl/stats" -TimeoutSeconds 45 -Headers @{ Accept = "application/json" }
