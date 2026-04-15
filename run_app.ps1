@@ -32,7 +32,8 @@ function Wait-ForHttpOk {
 
 function Get-NgrokTunnelInfo {
   param(
-    [int]$TimeoutSeconds = 45
+    [int]$TimeoutSeconds = 45,
+    [string]$LogPath = ""
   )
 
   $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
@@ -50,6 +51,23 @@ function Get-NgrokTunnelInfo {
         }
       } catch {
         continue
+      }
+    }
+
+    if ($LogPath -and (Test-Path $LogPath)) {
+      try {
+        $tail = Get-Content -Path $LogPath -Tail 100 -ErrorAction SilentlyContinue
+        $matchedLine = $tail | Where-Object { $_ -match "url=https://[^\s]+" } | Select-Object -Last 1
+        if ($matchedLine) {
+          $url = [regex]::Match($matchedLine, "https://[^\s]+").Value
+          if ($url) {
+            return [pscustomobject]@{
+              PublicUrl = [string]$url
+              InspectPort = -1
+            }
+          }
+        }
+      } catch {
       }
     }
 
@@ -79,7 +97,12 @@ if ($ngrokCmdInfo) {
 
 $backendCmd = "Set-Location '$backendDir'; & '$uvicornExe' src.api:app --reload --port 8000"
 $frontendCmd = "Set-Location '$frontendDir'; `$env:DANGEROUSLY_DISABLE_HOST_CHECK='true'; npm start"
-$ngrokCmd = "Set-Location '$repoRoot'; & '$ngrokExe' http 3000 --host-header=localhost:3000 --log stdout"
+$ngrokLogPath = Join-Path $repoRoot "ngrok_runtime.log"
+if (Test-Path $ngrokLogPath) {
+  Remove-Item $ngrokLogPath -Force
+}
+
+$ngrokCmd = "Set-Location '$repoRoot'; & '$ngrokExe' http 3000 --log stdout 2>&1 | Tee-Object -FilePath '$ngrokLogPath' -Append"
 
 # Clean up stale ngrok process from previous runs so inspect ports are not locked.
 $existingNgrok = Get-Process ngrok -ErrorAction SilentlyContinue
@@ -106,9 +129,9 @@ if (-not $frontendReady) {
 Start-Process powershell -ArgumentList "-NoExit", "-Command", $ngrokCmd | Out-Null
 
 Write-Output "Waiting for ngrok tunnel..."
-$tunnelInfo = Get-NgrokTunnelInfo -TimeoutSeconds 45
+$tunnelInfo = Get-NgrokTunnelInfo -TimeoutSeconds 75 -LogPath $ngrokLogPath
 if (-not $tunnelInfo) {
-  throw "ngrok tunnel URL was not detected from local ngrok inspect API ports (4040-4100)."
+  throw "ngrok tunnel URL was not detected from inspect API ports (4040-4100) or ngrok_runtime.log."
 }
 
 $publicUrl = $tunnelInfo.PublicUrl
@@ -123,8 +146,13 @@ Set-Content -Path (Join-Path $repoRoot "ngrok_url.txt") -Value $publicUrl
 Write-Output "Started backend, frontend, and ngrok in separate PowerShell windows."
 Write-Output "Open http://localhost:3000 on this PC."
 Write-Output "Use this ngrok URL on your laptop: $publicUrl"
-Write-Output "ngrok inspector UI: http://127.0.0.1:$inspectPort"
+if ($inspectPort -gt 0) {
+  Write-Output "ngrok inspector UI: http://127.0.0.1:$inspectPort"
+} else {
+  Write-Output "ngrok inspector UI port not detected from API (URL recovered from log fallback)."
+}
 Write-Output "Saved ngrok URL to: $repoRoot\ngrok_url.txt"
+Write-Output "Saved ngrok runtime log to: $ngrokLogPath"
 Write-Output "Laptop health check URL: $publicUrl/health"
 Write-Output "Laptop health check URL: $publicUrl/stats"
 if ($ngrokHealthReady) {
